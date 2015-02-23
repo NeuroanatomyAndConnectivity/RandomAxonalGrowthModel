@@ -596,7 +596,7 @@ class Simulation ():
 		"""
 		with open(path,'w') as f:
 			for n in self.neurons:
-				s = n.get_position().__str__().strip('()') + ", " + n.axon.line.get_head().__str__().strip('()') +  "\n"
+				s = n.get_position().__str__().strip('()') + "," + n.axon.get_head().__str__().strip('()') +  "\n"
 				f.write(s)
 
 
@@ -982,5 +982,5 @@ class SimpleNeuronGenerator (TrivialNeuronGenerator):
 s = Simulation([SimpleNeuronGenerator()])
 s.simulate()
 print s.get_statistics()
-#d = s.get_distance_matrix()
-#s.saveModelNeuronsWithStraightAxonsAsFile("ragv3naxons.txt")
+d = s.get_distance_matrix()
+s.saveModelNeuronsWithStraightAxonsAsFile("ragv3naxons.txt")
