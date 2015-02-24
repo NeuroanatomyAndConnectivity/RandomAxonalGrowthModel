@@ -466,10 +466,10 @@ class Simulation ():
 			constructing our super area, which contains all other areas.
 		"""
 		self.generators = neuron_generators		
-		self.neurons = []
-		self.dmatrix = Distances(100)
 		self.max_radius = 0
+		self.upper_limit_container_capacity = 0.55
 		min_x, min_y, max_x, max_y = 100000, 100000, 0, 0
+		id_generator = 1
 		for generator in neuron_generators:
 			self.areas = generator.get_areas()
 			for area in self.areas:
@@ -477,11 +477,38 @@ class Simulation ():
 				min_y = min( min_y, area.get_points()[0].y)				
 				max_x = max( max_x, area.get_points()[2].x)				
 				max_y = max( max_y, area.get_points()[2].y)
-		self.super_area = n2AxisParallelRectangle(n2Point(min_x, min_y), n2Point(max_x, max_y))
-		self.tree = GeoTree(15, self.super_area, 2.0)		
+				area.max_space = (area.get_points()[2].x - area.get_points()[0].x) * (area.get_points()[2].y - area.get_points()[0].y)
+				area.ocu_space = 0.0
+				area.sim_active = True
+				if not hasattr(area, 'id'):
+					area.id = 'Area%i' %(id_generator)
+					id_generator += 1
+		self.super_area = n2AxisParallelRectangle(n2Point(min_x, min_y), n2Point(max_x, max_y))		
 		self.max_distance = sqrt( pow(max_x - min_x, 2) + pow(max_y - min_y, 2))
 		self.dist_counter = 0
+		self.tree = 0
 		self.simulation_step_counter = 0
+		self.verbose = 0
+
+	def set_container_capacity_heuristic_limit (self, float_number):
+		""" Sets the percentage when a container will be considered full and
+			therefore no new neurons will be placed in there.
+		"""
+		self.upper_limit_container_capacity = float_number
+
+	def set_verbosity (self, integer):
+		self.verbose = integer
+
+	def use_geotree (self, boolean, capacity = 50):
+		""" Tells the simulation whether a indexing structure should be used,
+			to speed the computation up. With 300 neurons the factor is 3
+			(theoretically and practically about 2).
+			And with more neurons the factor increases.
+		"""		
+		if boolean:
+			self.tree = GeoTree(capacity, self.super_area, 2.0)
+		else :
+			self.tree = 0
 
 	def simulation_step (self):
 		""" This method simulates a simulation step. DO NOT CALL DIRECTLY.
@@ -490,58 +517,89 @@ class Simulation ():
 		added_neurons = 0
 		for generator in self.generators:		
 			for area in generator.get_areas():
-				neurons_to_add = generator.new_neurons(self.simulation_step_counter, area)
-				added_neurons += neurons_to_add
-				for i in xrange(neurons_to_add):				
-					nneuron = generator.next_neuron(self.simulation_step_counter, area)
-					while not self.is_free(nneuron, nneuron.radius):
-						nneuron = generator.next_neuron(self.simulation_step_counter, area)			
-					self.max_radius = max(nneuron.get_radius(), self.max_radius)
-					nneuron.axon = n2Line(nneuron.get_position())
-					nneuron.active = True
-					nneuron.dist_index = self.dist_counter
-					self.dist_counter += 1
-					self.tree.add_element(nneuron)
-					self.neurons.append(nneuron)		
+				if area.sim_active:
+					neurons_to_add = generator.new_neurons(self.simulation_step_counter, area)					
+					degree_of_capacity = area.ocu_space / area.max_space					
+					if degree_of_capacity > self.upper_limit_container_capacity:
+						if self.verbose:
+							print "Error: %s has reached quite its capacity. Skipping this container for the rest of the simulation." %(area.id)
+						area.sim_active = False
+						neurons_to_add = 0					
+					elif degree_of_capacity > 0.35 and self.verbose:
+						print "Warning: %s is going into capacity problems." %(area.id) 					
+					added_neurons += neurons_to_add
+					for i in xrange(neurons_to_add):				
+						nneuron = generator.next_neuron(self.simulation_step_counter, area)
+						while not self.is_free(nneuron, nneuron.radius):
+							nneuron = generator.next_neuron(self.simulation_step_counter, area)
+						self.max_radius = max(nneuron.get_radius(), self.max_radius)
+						nneuron.axon = n2Line(nneuron.get_position())
+						nneuron.active = True
+						nneuron.dist_index = self.dist_counter
+						area.ocu_space +=  pi * nneuron.get_radius() * nneuron.get_radius()
+						self.dist_counter += 1
+						if self.tree:
+							self.tree.add_element(nneuron)
+						self.neurons.append(nneuron)		
 		for neuron in self.neurons:			
 			if neuron.active:
 				# grow 
 				neuron.axon.push_delta(neuron.grow())
 				# make connections
-				if neuron.can_put_connection():					
-					center = neuron.axon.get_middle()
-					radius = neuron.axon.get_length() + self.max_radius
-					for ntest in self.tree.get_elements_within_radius(center, radius):
+				if neuron.can_put_connection():
+					if self.tree :						
+						center = neuron.axon.get_middle()
+						radius = neuron.axon.get_length() + self.max_radius
+						neurons = self.tree.get_elements_within_radius(center, radius)
+					else :
+						neurons = self.neurons
+					for ntest in neurons:
 						if ntest is not neuron and 	ntest.can_receive_connection(neuron) and \
 							neuron.axon.compute_distance(ntest.get_position()) < ntest.get_radius() and \
 							self.dmatrix.add(neuron, ntest, self.generators[0].metric.compute_distance):
 							neuron.put_connection(ntest)
 							ntest.receive_connection(neuron, neuron.axon)
 				neuron.active = neuron.can_put_connection() and self.super_area.is_inside(neuron.axon.get_head())
-		print "Step %i: Added %i new neurons." %(self.simulation_step_counter, added_neurons)
+		if self.verbose:
+			print "Step %i: Added %i new neurons." %(self.simulation_step_counter, added_neurons)
 
 	def simulate (self):
 		""" Main method to start the simulation.
 		"""
-		print "Adding Neurons and growing Axons"
+		self.neurons = []
+		self.dmatrix = Distances(100)
+		if self.tree :
+			self.tree = GeoTree(self.tree.limit, self.super_area, 2.0)
+		if self.verbose:
+			print "Adding Neurons and growing Axons"
 		min_iterations = 0
 		for gen in self.generators:
 			min_iterations = max(min_iterations, gen.get_minimum_iterations())
 		for i in xrange(min_iterations):
 			self.simulation_step()
-		print "Finishing Growth"
+		if self.verbose:
+			print "Finishing Growth"
 		while not self.finished():			
-			self.simulation_step()
-		self.print_statistics()
+			self.simulation_step()		
 		
-	def print_statistics (self):
+	def print_simulation_meta_data (self):
 		""" Prints some statistics onto the console.
 		"""
-		print "%i Neurons were added and they made %i connections" %(len(self.neurons), self.dmatrix.compute_statistics(self.max_distance, 1)[0])
-		print "The arithmetric mean of all connections is %f" %(self.dmatrix.compute_arithmetic_mean_length())
-		print "The median connection is %f long"%(self.dmatrix.get_median_length())
-		print "The shortest connection is %f short and the longest is %f long" %(self.dmatrix.get_min_length(), self.dmatrix.get_max_length())
-	
+		print "\nNeurons: ---------------------------------------------------\n"
+		print "%i Neurons were added and they made %i connections.\n" %(len(self.neurons), self.dmatrix.compute_statistics(self.max_distance, 1)[0])		
+		print "Connections: -----------------------------------------------\n"		
+		print "The arithmetric mean of all connection lengths is %f." %(self.dmatrix.compute_arithmetic_mean_length())
+		print "The median connection has a length of %f."%(self.dmatrix.get_median_length())
+		print "The shortest connection has a length of %f and the longest %f.\n" %(self.dmatrix.get_min_length(), self.dmatrix.get_max_length())		
+		print "Containers: ------------------------------------------------\n"		
+		for gen in self.generators:
+			for area in gen.areas:
+				if area.sim_active :
+					print 'Container "%s" reached %i%s of its capacity during the simulation.' %(area.id, int (area.ocu_space / area.max_space * 100), "%")
+				else :
+					print 'Container "%s" hit the given limit and was, at some point, excluded from further neuronal placement. Please check the settings for this area.' %(area.id)
+				
+		print "A capacity of 70 % means the container is full.\n"
 	
 	def finished (self):
 		""" Determines whether our simulation has finished.
@@ -554,9 +612,12 @@ class Simulation ():
 	def is_free(self, point, radius):
 		""" Computes whether the given area is already (partly) occupied.
 		"""
-		neurons = self.tree.get_elements_within_radius(point, radius)
+		if self.tree:
+			neurons = self.tree.get_elements_within_radius(point, radius)
+		else :
+			neurons = self.neurons
 		for neuron in neurons:			
-			if self.generators[0].metric.compute_distance(point.get_position(), neuron.get_position()) < radius:
+			if self.generators[0].metric.compute_distance(point.get_position(), neuron.get_position()) < (radius + neuron.get_radius()):
 				return False		
 		return True
 
@@ -590,13 +651,13 @@ class Simulation ():
 				s = n.get_position().__str__().strip('()') + "\n" 
 				f.write(s)
 
-	def saveModelNeuronsWithStraightAxonsAsFile (self, path):
+	def saveModelNeuronsWithAxonsAsFile (self, path):
 		""" Saves our model (neurons and respecting axons) as coordinates in
 			a text file
 		"""
 		with open(path,'w') as f:
 			for n in self.neurons:
-				s = n.get_position().__str__().strip('()') + "," + n.axon.get_head().__str__().strip('()') +  "\n"
+				s = n.get_position().__str__().strip('()') + ", " + n.axon.get_head().__str__().strip('()') +  "\n"
 				f.write(s)
 
 
@@ -860,8 +921,8 @@ class Scipy1DInterpolation ():
 	generator then specifies, which class to use and when etc.
 	
 	Every new neuron class has to implement the methods defined in TrivialNeuron
-	(see above). This is easily done by inherit from it. See is shown in the 
-	definition of SimpleNeuron. As you can see TrivialNeuron is in the brackets
+	(see above). This is easily done by inherit from it. It is shown in the 
+	definition of SimpleNeuron. As you can see TrivialNeuron is in the parenthesis
 	and therefore SimpleNeuron inherits all methods and property from TrivialNeuron.
 	You can now reimplement the methods you like to alter and even create new
 	methods and properties.
@@ -880,6 +941,33 @@ class Scipy1DInterpolation ():
 	an instance of it providing your generator. After that you start the
 	simulation by calling simulate(). And finally cou can call any of the 
 	statistics methods provided.
+	
+	The simulation uses a heuristic to determine when a container is defined
+	full and that it can not add more neurons to it (because there is no more 
+	free space left). It tracks how much space is used by the neurons and how
+	big is the area in which they should be placed. If this ratio exceeds a
+	certain value it gets more difficult to find free space to place a new one.
+	Therefor there exist a certain threshold at which neurons won't be placed
+	anymore - this parameter can be set by calling
+	set_container_capacity_heuristic_limit. Normally this value is set to 0.55
+	and setting it higher will increase the time to compute exponentially.
+	Though the placement is random in nature, this value can't be tingled 
+	exactly.
+	This procedure is done to prevent the simulation from getting into a 
+	endless loop. (as Sharzad already pointed out)
+	
+	Normally the simulation is now silent. To increase its level of chattiness
+	call the function set_verbosity(1) or something similar.
+	Additionally call print_simulation_meta_data() to print meta information
+	about the computation (like area capacity) and compute_statistics() to
+	generate and print the distance density bins.
+	
+	If you use many neurons and a large areas, you can use an indexing structure
+	to (theoretically) speed up the computation. Just call use_geotree(True) 
+	to use it or use_geotree(False) to switch it off again. Switching it on 
+	or off during simulation will lead to errors and will break it. 
+	It is recommend to firstly consider it, if you plan to put 1000 neurons
+	and more.
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
 """
@@ -953,13 +1041,13 @@ class SimpleNeuronGenerator (TrivialNeuronGenerator):
 		area = n2Rectangle(n2Point(0,0),n2Point(self.limit_x,self.limit_y))
 		area.id = "TheOneAndOnly!"
 		self.areas = [area]
-		self.gauss = GaussAlikeFunction(35,10,5,10,60)
+		self.gauss = GaussAlikeFunction(35,5,5,10,60)
 
 	def get_minimum_iterations (self):
 		""" As stated above this tells the simulation how much minimum simulation
 			steps have to be simulated.
 		"""
-		return 60
+		return 120
 
 	def new_neurons(self, simulation_step, area):
 		""" Tells the simulation how many neurons will be added in this step
@@ -981,6 +1069,7 @@ class SimpleNeuronGenerator (TrivialNeuronGenerator):
 
 s = Simulation([SimpleNeuronGenerator()])
 s.simulate()
+s.print_simulation_meta_data()
 print s.get_statistics()
-d = s.get_distance_matrix()
-s.saveModelNeuronsWithStraightAxonsAsFile("ragv3naxons.txt")
+#d = s.get_distance_matrix()
+#s.saveModelNeuronsWithAxonsAsFile("ragv3naxons.txt")
