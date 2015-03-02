@@ -252,7 +252,7 @@ class n2AxisParallelRectangle (n2Rectangle):
 	"""	
 	
 	def is_inside (self, p1):
-		return 0 <= p1.x <= self.ruPoint.x and 0 <= p1.y <= self.ruPoint.y
+		return self.lbPoint.x <= p1.x <= self.ruPoint.x and self.lbPoint.y <= p1.y <= self.ruPoint.y
 		
 
 class GeoTree ():
@@ -1067,9 +1067,9 @@ class SimpleNeuronGenerator (TrivialNeuronGenerator):
 """ Till this line everything was just defined. The lines below start the actual simulation
 """		
 
-s = Simulation([SimpleNeuronGenerator()])
-s.simulate()
-s.print_simulation_meta_data()
-print s.get_statistics()
+#s = Simulation([SimpleNeuronGenerator()])
+#s.simulate()
+#s.print_simulation_meta_data()
+#print s.get_statistics()
 #d = s.get_distance_matrix()
 #s.saveModelNeuronsWithAxonsAsFile("ragv3naxons.txt")
