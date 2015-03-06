@@ -485,9 +485,7 @@ class Simulation ():
 					id_generator += 1
 		self.super_area = n2AxisParallelRectangle(n2Point(min_x, min_y), n2Point(max_x, max_y))		
 		self.max_distance = sqrt( pow(max_x - min_x, 2) + pow(max_y - min_y, 2))
-		self.dist_counter = 0
 		self.tree = 0
-		self.simulation_step_counter = 0
 		self.verbose = 0
 
 	def set_container_capacity_heuristic_limit (self, float_number):
@@ -568,6 +566,8 @@ class Simulation ():
 		"""
 		self.neurons = []
 		self.dmatrix = Distances(100)
+		self.simulation_step_counter = 0
+		self.dist_counter = 0
 		if self.tree :
 			self.tree = GeoTree(self.tree.limit, self.super_area, 2.0)
 		if self.verbose:
