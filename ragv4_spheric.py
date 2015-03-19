@@ -1805,9 +1805,9 @@ class Simulation ():
 			if neuron.active:
 				# grow 
 				if neuron.type == "long" :
-					x = round(neuron.axon.head.x)
-					y = round(neuron.axon.head.y)
-					z = round(neuron.axon.head.z)
+					x = min(self.chemical_gradients.shape[0] - 1, max(1, round(neuron.axon.head.x) - bounding_box.left_front_lower.x))
+					y = min(self.chemical_gradients.shape[1] - 1, max(1, round(neuron.axon.head.y) - bounding_box.left_front_lower.y))
+					z = min(self.chemical_gradients.shape[2] - 1, max(1, round(neuron.axon.head.z) - bounding_box.left_front_lower.z))
 					target_area = self.chem_dict[neuron.target_area]
 					gradient_field = [self.chemical_gradients[x - 1][y - 1][z - 1][target_area], self.chemical_gradients[x - 1][y][z - 1][target_area], \
 					self.chemical_gradients[x - 1][y + 1][z - 1][target_area], self.chemical_gradients[x][y + 1][z - 1][target_area], \
@@ -1824,7 +1824,7 @@ class Simulation ():
 					self.chemical_gradients[x + 1][y + 1][z + 1][target_area], self.chemical_gradients[x + 1][y][z + 1][target_area], \
 					self.chemical_gradients[x + 1][y - 1][z + 1][target_area], self.chemical_gradients[x][y - 1][z + 1][target_area], \
 					self.chemical_gradients[x][y][z + 1][target_area]]						
-					neuron.axon.push(neuron.grow(gradient_field))
+					neuron.axon.push_delta(neuron.grow(gradient_field))
 				elif neuron.type == "short":					
 					neuron.axon.push_delta(neuron.grow())
 				self.neuron_path[neuron.dist_index].append(neuron.axon.head)
@@ -2058,7 +2058,7 @@ class LongDistanceNeuron (object):
 				summe += liste[i]
 				i -= 1
 			z = i / 9 -1
-			i = i - z * 9		
+			i %= 9	
 			if i == 0 or i == 1 or i == 2:
 				x = -1
 			elif i == 3 or i == 7 or i == 8:
@@ -2071,9 +2071,9 @@ class LongDistanceNeuron (object):
 				y = 0
 			else:
 				y = 1
-			direction.x = x * growth_speed + self.axon.head.x
-			direction.y = y * growth_speed + self.axon.head.y
-			direction.z = z * growth_speed + self.axon.head.z
+			direction.x = x * growth_speed
+			direction.y = y * growth_speed
+			direction.z = z * growth_speed
 		else:
 			# "grey matter"
 			direction.x = random.normalvariate(self.axon.direction_vector_norm.x , self.axon_flexibility) # flexibility of axon
