@@ -1754,8 +1754,9 @@ class Simulation ():
 		self.bounding_box = area.get_bounding_box()
 		self.max_distance = self.simulation_area.longest_in_area_line_length
 		
-	def set_chemical_gradient_field (self, gradient_field):
+	def set_chemical_gradient_field (self, gradient_field, dictionary):
 		self.chemical_gradients = gradient_field
+		self.chem_dict = dictionary
 
 	def use_geotree (self, boolean, capacity = 50, search_radius = 5):
 		""" Tells the simulation whether a indexing structure should be used,
@@ -1794,7 +1795,7 @@ class Simulation ():
 						nneuron.axon = n3Line(nneuron.position)
 						nneuron.active = True
 						nneuron.dist_index = self.dist_counter
-						area.ocu_space += 4 / 3 * pi * nneuron.cellbody_radius * nneuron.cellbody_radius * nneuron.cellbody_radius
+						area.occupied_volume += 4 / 3 * pi * nneuron.cellbody_radius * nneuron.cellbody_radius * nneuron.cellbody_radius
 						self.dist_counter += 1
 						if self.tree:
 							self.tree.add_element(nneuron)
@@ -1807,7 +1808,7 @@ class Simulation ():
 					x = round(neuron.axon.head.x)
 					y = round(neuron.axon.head.y)
 					z = round(neuron.axon.head.z)
-					target_area = neuron.target_area
+					target_area = self.chem_dict[neuron.target_area]
 					gradient_field = [self.chemical_gradients[x - 1][y - 1][z - 1][target_area], self.chemical_gradients[x - 1][y][z - 1][target_area], \
 					self.chemical_gradients[x - 1][y + 1][z - 1][target_area], self.chemical_gradients[x][y + 1][z - 1][target_area], \
 					self.chemical_gradients[x + 1][y + 1][z - 1][target_area], self.chemical_gradients[x + 1][y][z - 1][target_area], \
@@ -1828,20 +1829,19 @@ class Simulation ():
 					neuron.axon.push_delta(neuron.grow())
 				self.neuron_path[neuron.dist_index].append(neuron.axon.head)
 				# make connections
-				if neuron.can_put_connection():
-					if self.tree :						
-						center = neuron.axon.middle
-						radius = neuron.axon.get_length + self.tree_search_radius
-						neurons = self.tree.get_points_within_radius(center, radius)
-					else :
-						neurons = self.neurons
-					for ntest in neurons:
-						if ntest is not neuron and ntest.can_receive_connection(neuron) and \
-							neuron.axon.compute_distance(ntest.position) < ntest.dendrite_radius and \
-							self.dmatrix.add(neuron, ntest, self.generators[0].metric.compute_distance):
-							neuron.put_connection(ntest)
-							ntest.receive_connection(neuron, neuron.axon)
-				neuron.active = neuron.can_put_connection() and self.simulation_area.lies_inside(neuron.axon.head)
+				if self.tree :						
+					center = neuron.axon.middle
+					radius = neuron.axon.get_length + self.tree_search_radius
+					neurons = self.tree.get_points_within_radius(center, radius)
+				else :
+					neurons = self.neurons
+				for ntest in neurons:
+					if ntest is not neuron and neuron.can_put_connection(ntest) and ntest.can_receive_connection(neuron) and \
+						neuron.axon.compute_distance(ntest.position) < ntest.dendrite_radius and \
+						self.dmatrix.add(neuron, ntest, self.generators[0].metric.compute_distance):
+						neuron.put_connection(ntest)
+						ntest.receive_connection(neuron, neuron.axon)
+				neuron.active = self.simulation_area.lies_inside(neuron.axon.head)
 		if self.verbose:
 			print "Step %i: Added %i new neurons." %(self.simulation_step_counter, added_neurons)
 
@@ -2041,14 +2041,14 @@ class LongDistanceNeuron (object):
 		self.grow_speed_constant = 7
 		self.axon_flexibility = 0.02
 		self.growth_speed = 0.3
-		self.area_type = 0
+		self.area_type = ""
 		
 	def grow (self, gradient_field):
 		""" modified glücksrad auswahl
 		"""
 		inverse_distance_to_area = max(gradient_field)
 		direction = n3Point(0, 0, 0)
-		if inverse_distance_to_area > 0.85 :
+		if inverse_distance_to_area < 0.85 :
 			# "white matter"	
 			liste = map(lambda x: (max(0, x-0.5))**3, gradient_field)
 			summe = random.random() * sum(liste)
@@ -2056,7 +2056,7 @@ class LongDistanceNeuron (object):
 			i = 0
 			while summe > 0:
 				summe += liste[i]
-				i += 1
+				i -= 1
 			z = i / 9 -1
 			i = i - z * 9		
 			if i == 0 or i == 1 or i == 2:
@@ -2088,12 +2088,14 @@ class LongDistanceNeuron (object):
 			wants to establish a connection OR whether the axon to this 
 			neuron can still grow.			
 		"""		
-		return self.outgoing_connections < 20 and target_neuron.area_type == self.target_area
+		return target_neuron.area_type == self.target_area
 	
 	def put_connection(self, target_neuron):
 		""" Is called, when the outgoing connection is made.
 		"""
 		self.outgoing_connections += 1
+		if self.outgoing_connections >= 20:
+			self.active = False
 		
 	def can_receive_connection(self):
 		""" Is called, when another neuron tries to make a connection.
@@ -2240,7 +2242,7 @@ n3Sphere(n3Point(58, 58, -58), 75), n3Sphere(n3Point(-58, 58, -58), 75), n3Spher
 	
 s = Simulation([lg1, lg2, lg3, lg4, lg5, lg6])
 s.set_bounding_area = n3Sphere(n3Point(0, 0, 0), 100)
-s.set_chemical_gradient_field(np.load("chemical_gradient_field.npy"))
+s.set_chemical_gradient_field(np.load("chemical_gradient_field.npy"),  {"A1" : 0, "A2" : 1, "A3" : 2, "A4" : 3, "A5" : 4, "A6" : 5})
 s.set_verbosity(1)
 #s.simulate()
 #s.print_simulation_meta_data()
