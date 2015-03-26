@@ -786,18 +786,18 @@ class n3GeoTree(object):
 		self.container = []
 		self.cube = cube
 		self.is_leaf = True
-		self.middle_x = cube.get_middle().x
-		self.middle_y = cube.get_middle().y
-		self.middle_z = cube.get_middle().z
+		self.middle_x = cube.middle.x
+		self.middle_y = cube.middle.y
+		self.middle_z = cube.middle.z
 
 	def add_element (self, element):				
 		trie = self
 		while not trie.is_leaf:
-			if element.x <= trie.middle_x:
+			if element.position.x <= trie.middle_x:
 				#left
-				if element.y <= trie.middle_y:
+				if element.position.y <= trie.middle_y:
 					#front
-					if element.z <= trie.middle_z:
+					if element.position.z <= trie.middle_z:
 						#bottom
 						trie = trie.cube_left_front_lower
 					else:
@@ -806,7 +806,7 @@ class n3GeoTree(object):
 						
 				else:
 					#back
-					if element.z <= trie.middle_z:
+					if element.position.z <= trie.middle_z:
 						#bottom
 						trie = trie.cube_left_back_lower
 					else:
@@ -814,9 +814,9 @@ class n3GeoTree(object):
 						trie = trie.cube_left_back_top
 			else:
 				#right
-				if element.y <= trie.middle_y:
+				if element.position.y <= trie.middle_y:
 					#front
-					if element.z <= trie.middle_z:
+					if element.position.z <= trie.middle_z:
 						#bottom
 						trie = trie.cube_right_front_lower
 					else:
@@ -825,7 +825,7 @@ class n3GeoTree(object):
 						
 				else:
 					#back
-					if element.z <= trie.middle_z:
+					if element.position.z <= trie.middle_z:
 						#bottom
 						trie = trie.cube_right_back_lower
 					else:
@@ -834,7 +834,7 @@ class n3GeoTree(object):
 		trie.container.append(element)
 		if len(trie.container) > trie.limit:
 				#split				
-				p = trie.cube.get_points()				
+				p = trie.cube.get_ordered_points()				
 				#bottom
 				p.insert(1, p[0] + (p[1] - p[0])/2)
 				p.insert(3, p[2] + (p[3] - p[2])/2)
@@ -880,11 +880,11 @@ class n3GeoTree(object):
 				
 				# assume the data is nearly linearly distributed, so we don't have to check whether our newly created container gets full
 				for el in trie.container:					
-					if el.x <= trie.middle_x:
+					if el.position.x <= trie.middle_x:
 						#left
-						if el.y <= trie.middle_y:
+						if el.position.y <= trie.middle_y:
 							#front
-							if el.z <= trie.middle_z:
+							if el.position.z <= trie.middle_z:
 								#bottom
 								trie.cube_left_front_lower.container.append(el)
 							else:
@@ -892,7 +892,7 @@ class n3GeoTree(object):
 								trie.cube_left_front_top.container.append(el)								
 						else:
 							#back
-							if el.z <= trie.middle_z:
+							if el.position.z <= trie.middle_z:
 								#bottom
 								trie.cube_left_back_lower.container.append(el)
 							else:
@@ -900,9 +900,9 @@ class n3GeoTree(object):
 								trie.cube_left_back_top.container.append(el)
 					else:
 						#right
-						if el.y <= trie.middle_y:
+						if el.position.y <= trie.middle_y:
 							#front
-							if el.z <= trie.middle_z:
+							if el.position.z <= trie.middle_z:
 								#bottom
 								trie.cube_right_front_lower.container.append(el)
 							else:
@@ -910,16 +910,16 @@ class n3GeoTree(object):
 								trie.cube_right_front_top.container.append(el)								
 						else:
 							#back
-							if el.z <= trie.middle_z:
+							if el.position.z <= trie.middle_z:
 								#bottom
 								trie.cube_right_back_lower.container.append(el)
 							else:
 								#top
 								trie.cube_right_back_top.container.append(el)
 				trie.is_leaf = False
-				trie.container = []	
+				trie.container = []		
 			
-	def get_sourrounding_points (self, coords):
+	def get_sourrounding_elements (self, coords):
 		trie = self
 		while not trie.is_leaf:
 			if coords.x <= trie.middle_x:
@@ -963,7 +963,7 @@ class n3GeoTree(object):
 		#return deepcopy(trie.container)
 		return trie.container
 
-	def get_points_within_radius (self, coord, radius):
+	def get_elements_within_radius (self, coord, radius):
 		result = []		
 		
 		coords = n3Point(coord.x - radius, coord.y, coord.z)
@@ -1241,15 +1241,15 @@ class n2GeoTree (object):
 		self.container = []
 		self.rectangle = rectangle
 		self.is_leaf = True
-		self.middle_x = rectangle.get_middle().x
-		self.middle_y = rectangle.get_middle().y
+		self.middle_x = rectangle.middle.x
+		self.middle_y = rectangle.middle.y
 
 	def add_element (self, element):				
 		trie = self
 		while not trie.is_leaf:
-			if element.x <= trie.middle_x:
+			if element.position.x <= trie.middle_x:
 				#left
-				if element.y <= trie.middle_y:
+				if element.position.y <= trie.middle_y:
 					#front					
 					trie = trie.rect_left_front
 				else:
@@ -1257,7 +1257,7 @@ class n2GeoTree (object):
 					trie = trie.rect_left_back
 			else:
 				#right
-				if element.y <= trie.middle_y:
+				if element.position.y <= trie.middle_y:
 					#front
 					trie = trie.rect_right_front						
 				else:
@@ -1266,7 +1266,7 @@ class n2GeoTree (object):
 		trie.container.append(element)
 		if len(trie.container) > trie.limit:
 				#split				
-				p = trie.rectangle.get_points()				
+				p = trie.rectangle.get_ordered_points()				
 				
 				p.insert(1, p[0] + (p[1] - p[0])/2)
 				p.insert(3, p[2] + (p[3] - p[2])/2)
@@ -1280,10 +1280,10 @@ class n2GeoTree (object):
 				trie.cube_right_front= n2GeoTree(self.limit, n2AxisParallelRectangle(p[7], p[5]))				
 				
 				# assume the data is nearly linearly distributed, so we don't have to check whether our newly created container gets full
-				for el in trie.container:					
-					if element.x <= trie.middle_x:
+				for el in trie.container:
+					if element.position.x <= trie.middle_x:
 						#left
-						if element.y <= trie.middle_y:
+						if element.position.y <= trie.middle_y:
 							#front					
 							trie = trie.rect_left_front.container.append(el)
 						else:
@@ -1291,7 +1291,7 @@ class n2GeoTree (object):
 							trie = trie.rect_left_back.container.append(el)
 					else:
 						#right
-						if element.y <= trie.middle_y:
+						if element.position.y <= trie.middle_y:
 							#front
 							trie = trie.rect_right_front.container.append(el)
 						else:
@@ -1300,7 +1300,7 @@ class n2GeoTree (object):
 				trie.is_leaf = False
 				trie.container = []	
 			
-	def get_sourrounding_points (self, coords):
+	def get_sourrounding_elements (self, coords):
 		trie = self
 		while not trie.is_leaf:
 			if coords.x <= trie.middle_x:
@@ -1322,7 +1322,7 @@ class n2GeoTree (object):
 		#return deepcopy(trie.container)
 		return trie.container
 
-	def get_points_within_radius (self, coord, radius):
+	def get_elements_within_radius (self, coord, radius):
 		result = []		
 		
 		coords = n3Point(coord.x - radius, coord.y, coord.z)
@@ -1786,7 +1786,7 @@ class Simulation ():
 			And with more neurons the factor increases.
 		"""		
 		if boolean:
-			self.tree = n3GeoTree(capacity, self.simulation_area)
+			self.tree = n3GeoTree(capacity, self.bounding_box)
 			self.tree_search_radius = search_radius
 		else :
 			self.tree = 0
@@ -1827,9 +1827,9 @@ class Simulation ():
 			if neuron.active:
 				# grow 
 				if neuron.type == "long" :
-					x = min(self.chemical_gradients.shape[0] - 1, max(1, round(neuron.axon.head.x) - self.bounding_box.left_front_lower.x))
-					y = min(self.chemical_gradients.shape[1] - 1, max(1, round(neuron.axon.head.y) - self.bounding_box.left_front_lower.y))
-					z = min(self.chemical_gradients.shape[2] - 1, max(1, round(neuron.axon.head.z) - self.bounding_box.left_front_lower.z))
+					x = min(self.chemical_gradients.shape[0] - 2, max(1, round(neuron.axon.head.x) - self.bounding_box.left_front_lower.x))
+					y = min(self.chemical_gradients.shape[1] - 2, max(1, round(neuron.axon.head.y) - self.bounding_box.left_front_lower.y))
+					z = min(self.chemical_gradients.shape[2] - 2, max(1, round(neuron.axon.head.z) - self.bounding_box.left_front_lower.z))
 					target_area = self.chem_dict[neuron.target_area]
 					gradient_field = [self.chemical_gradients[x - 1][y - 1][z - 1][target_area], self.chemical_gradients[x - 1][y][z - 1][target_area], \
 					self.chemical_gradients[x - 1][y + 1][z - 1][target_area], self.chemical_gradients[x][y + 1][z - 1][target_area], \
@@ -1853,8 +1853,8 @@ class Simulation ():
 				# make connections				
 				if self.tree :						
 					center = neuron.axon.middle
-					radius = neuron.axon.get_length + self.tree_search_radius
-					neurons = self.tree.get_points_within_radius(center, radius)
+					radius = neuron.axon.length + self.tree_search_radius
+					neurons = self.tree.get_elements_within_radius(center, radius)
 				for ntest in neurons:
 					if ntest is not neuron and neuron.can_put_connection(ntest) and ntest.can_receive_connection(neuron) and \
 						neuron.axon.compute_distance(ntest.position) < ntest.dendrite_radius and \
@@ -1897,7 +1897,7 @@ class Simulation ():
 			self.bounding_box = self.simulation_area
 			self.max_distance = self.simulation_area.longest_in_area_line_length
 		if self.tree :
-			self.tree = n3GeoTree(self.tree.limit, self.super_area)
+			self.tree = n3GeoTree(self.tree.limit, self.bounding_box)
 		if self.verbose:
 			print "Adding Neurons and growing Axons"
 		min_iterations = 0
@@ -1941,7 +1941,7 @@ class Simulation ():
 		""" Computes whether the given area is already (partly) occupied.
 		"""
 		if self.tree:
-			neurons = self.tree.get_elements_within_radius(point, radius)
+			neurons = self.tree.get_elements_within_radius(point.position, radius)
 		else :
 			neurons = self.neurons
 		for neuron in neurons:			
@@ -2279,7 +2279,7 @@ inh =  [n3Sphere(n3Point(58, 58, 58), 75), n3Sphere(n3Point(-58, 58, 58), 75), n
 n3Sphere(n3Point(58, 58, -58), 75), n3Sphere(n3Point(-58, 58, -58), 75), n3Sphere(n3Point(58, -58, -58), 75), n3Sphere(n3Point(-58, -58, -58), 75)]	
 	
 s = Simulation([lg1, lg2, lg3, lg4, lg5, lg6])
-s.set_bounding_area = n3Sphere(n3Point(0, 0, 0), 100)
+s.set_bounding_area(n3Sphere(n3Point(0, 0, 0), 100))
 s.set_chemical_gradient_field(np.load("chemical_gradient_field.npy"),  {"A1" : 0, "A2" : 1, "A3" : 2, "A4" : 3, "A5" : 4, "A6" : 5})
 s.set_verbosity(0)
 s.simulate()
