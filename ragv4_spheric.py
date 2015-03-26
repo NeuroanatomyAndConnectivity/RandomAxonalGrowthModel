@@ -1822,6 +1822,7 @@ class Simulation ():
 							self.tree.add_element(nneuron)
 						self.neurons.append(nneuron)
 						self.neuron_path.append([nneuron.position])
+		neurons = self.neurons
 		for neuron in self.neurons:			
 			if neuron.active:
 				# grow 
@@ -1854,15 +1855,13 @@ class Simulation ():
 					center = neuron.axon.middle
 					radius = neuron.axon.get_length + self.tree_search_radius
 					neurons = self.tree.get_points_within_radius(center, radius)
-				else :
-					neurons = self.neurons
 				for ntest in neurons:
 					if ntest is not neuron and neuron.can_put_connection(ntest) and ntest.can_receive_connection(neuron) and \
 						neuron.axon.compute_distance(ntest.position) < ntest.dendrite_radius and \
 						self.dmatrix.add(neuron, ntest, self.generators[0].metric.compute_distance):
 						neuron.put_connection(ntest)
 						ntest.receive_connection(neuron, neuron.axon)
-				neuron.active = self.simulation_area.lies_inside(neuron.axon.head)
+				neuron.active = neuron.active and self.simulation_area.lies_inside(neuron.axon.head)
 		if self.verbose:
 			print "Step %i: Added %i new neurons." %(self.simulation_step_counter, added_neurons)
 
@@ -2026,7 +2025,9 @@ class ShortDistanceNeuron (object):
 			wants to establish a connection OR whether the axon to this 
 			neuron can still grow.			
 		"""
-		return self.outgoing_connections < 10 and self.bounding_area.lies_inside(self.axon.head)
+		if self.outgoing_connections >= 10 and not self.bounding_area.lies_inside(self.axon.head) :
+			self.active = False
+		return not self.active
 	
 	def put_connection(self, target_neuron):
 		""" Is called, when the outgoing connection is made.
