@@ -1647,7 +1647,7 @@ class Distances ():
 			self.container = new_container
 			return self.add(element1, element2, distance_function)
 		elif	self.container[element1.dist_index-1][element2.dist_index-1] == 0:
-			self.container[element1.dist_index-1][element2.dist_index-1] = distance_function(element1, element2)
+			self.container[element1.dist_index-1][element2.dist_index-1] = distance_function(element1.position, element2.position)
 			return True
 		else:
 			return False
@@ -2021,7 +2021,7 @@ class ShortDistanceNeuron (object):
 		self.direction = self.direction / self.direction.length * self.growth_speed # growthspeed		
 		return self.direction
 		
-	def can_put_connection(self):
+	def can_put_connection(self, *t):
 		""" Is called, when the axon from this neuron found an neuron and 
 			wants to establish a connection OR whether the axon to this 
 			neuron can still grow.			
@@ -2033,7 +2033,7 @@ class ShortDistanceNeuron (object):
 		"""
 		self.outgoing_connections += 1
 		
-	def can_receive_connection(self):
+	def can_receive_connection(self, *t):
 		""" Is called, when another neuron tries to make a connection.
 			The return value states whether this is okay or not
 		"""
@@ -2129,7 +2129,7 @@ class LongDistanceNeuron (object):
 		if self.outgoing_connections >= 20:
 			self.active = False
 		
-	def can_receive_connection(self):
+	def can_receive_connection(self, *t):
 		""" Is called, when another neuron tries to make a connection.
 			The return value states whether this is okay or not
 		"""
