@@ -2025,7 +2025,7 @@ class ShortDistanceNeuron (object):
 			wants to establish a connection OR whether the axon to this 
 			neuron can still grow.			
 		"""
-		if self.outgoing_connections >= 10 and not self.bounding_area.lies_inside(self.axon.head) :
+		if self.outgoing_connections >= 10 or not self.bounding_area.lies_inside(self.axon.head) :
 			self.active = False
 		return not self.active
 	
