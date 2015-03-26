@@ -6,14 +6,6 @@ Created on Wed Mar 18 17:54:28 2015
 @mail: jan.zelmer@gmx.net
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 02 17:33:22 2015
-
-@author: Jan Zelmer
-@mail: jzelmer@gmx.net
-
-"""
 from math import sqrt
 from math import radians
 from math import cos
@@ -60,7 +52,7 @@ class n3Point(object):
 		return self.__class__(self.y * v.z - self.z * v.y, self.z * v.x - self.x * v.z, self.x * v.y - self.y * v.x)
 
 	def distance_to (self, p):
-		return (self - p).length
+		return sqrt ((self.x - p.x )* (self.x - p.x) + (self.y - p.y) * (self.y - p.y) + (self.z - p.z) * (self.z - p.z))
 		
 	def __str__(self):
 		""" Returns a readable string.
@@ -86,6 +78,9 @@ class n3Point(object):
 		y2 = round(x1 * sin(gamma) + y1 * cos (gamma), 4)
 		return self.__class__(x2, y2, z2)
 		
+	def get_length (self):
+		self.length = sqrt (self.x * self.x + self.y * self.y + self.z * self.z)
+		return self.length
 		
 
 class n3Line(object):
@@ -96,8 +91,13 @@ class n3Line(object):
 		the tail.
 		"""		
 		self.head = points[0]
+		self.tail = 0
 		for p in points[1:]:
 			self.push(p)
+		if self.tail :
+			self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+			(self.head.y - self.tail.y) * (self.head.y - self.tail.y) + \
+			(self.head.z - self.tail.z) * (self.head.z - self.tail.z)
 		
 	def push (self, p): 
 		""" Pushes the line by adding the point p. The new head is point p 
@@ -107,7 +107,10 @@ class n3Line(object):
 		self.head = p
 		self.direction_vector = self.head - self.tail
 		self.direction_vector_norm = self.direction_vector / self.direction_vector.length
-		self.middle = self.tail + (self.head - self.tail) / 2 
+		self.middle = self.tail + (self.head - self.tail) / 2
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y) + \
+		(self.head.z - self.tail.z) * (self.head.z - self.tail.z)
 
 	def push_delta (self, p):
 		""" Pushes the line by adding the coordinates form the point p to the
@@ -118,7 +121,10 @@ class n3Line(object):
 		self.head = self.head + p
 		self.direction_vector = self.head - self.tail
 		self.direction_vector_norm = self.direction_vector / self.direction_vector.length
-		self.middle = self.tail + (self.head - self.tail) / 2 
+		self.middle = self.tail + (self.head - self.tail) / 2
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y) + \
+		(self.head.z - self.tail.z) * (self.head.z - self.tail.z)
 
 	def get_middle (self):
 		""" Returns the point representing the middle.
@@ -153,7 +159,10 @@ class n3Line(object):
 	def get_length (self):
 		""" Returns the length of this line
 		"""
-		return (self.head - self.tail).length
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y) + \
+		(self.head.z - self.tail.z) * (self.head.z - self.tail.z)
+		return self.length
  
  
 class n3Sphere (object):
@@ -496,6 +505,9 @@ class n2Point(object):
 		y = round( self.x * sin (alpha) + self.y * cos (alpha), 4)
 		return self.__class__(x, y)		
 
+	def get_length (self):
+		self.length = sqrt (self.x * self.x + self.y * self.y)
+		return self.length
 
 class n2Line (object):
 	""" This class defines a line. It is defined by 2 points: head and tail.
@@ -510,8 +522,12 @@ class n2Line (object):
 		the tail.
 		"""		
 		self.head = points[0]
+		self.tail = 0
 		for p in points[1:]:
 			self.push(p)
+		if self.tail :
+			self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+			(self.head.y - self.tail.y) * (self.head.y - self.tail.y)
 		
 	def push (self, p): 
 		""" Pushes the line by adding the point p. The new head is point p 
@@ -522,6 +538,8 @@ class n2Line (object):
 		self.direction_vector = self.head - self.tail
 		self.direction_vector_norm = self.direction_vector / self.direction_vector.length
 		self.middle = self.tail + (self.head - self.tail) / 2
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y)
 
 	def push_delta (self, p):
 		""" Pushes the line by adding the coordinates form the point p to the
@@ -533,6 +551,8 @@ class n2Line (object):
 		self.direction_vector = self.head - self.tail
 		self.direction_vector_norm = self.direction_vector / self.direction_vector.length
 		self.middle = self.tail + (self.head - self.tail) / 2
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y)
 
 	def get_middle (self):
 		""" Returns the point representing the middle.
@@ -567,7 +587,9 @@ class n2Line (object):
 	def get_length (self):
 		""" Returns the length of this line
 		"""
-		return (self.head - self.tail).length
+		self.length = (self.head.x - self.tail.x) * (self.head.x - self.tail.x) + \
+		(self.head.y - self.tail.y) * (self.head.y - self.tail.y)
+		return self.length
 
 
 class n2Sphere (object):
@@ -1696,7 +1718,6 @@ def create_chemical_gradients_field (area, sources, filepath, inhibitors=0):
 		(bounding_box.left_front_lower - bounding_box.left_back_lower).length, \
 		(bounding_box.left_front_lower - bounding_box.left_front_top).length, len(sources) ))
 		diagonal_length = (bounding_box.right_back_top - bounding_box.left_front_lower).length
-		print chemical_gradients.shape
 		p = n3Point(0, 0, 0)
 		lx = bounding_box.left_front_lower.x
 		ly = bounding_box.left_front_lower.y
@@ -1714,7 +1735,7 @@ def create_chemical_gradients_field (area, sources, filepath, inhibitors=0):
 								for inhibitor in inhibitors:
 									chemical_gradients[x, y, z, source] -= max (0, ( 1 - inhibitor.middle.distance_to(p) / inhibitor.radius)  )
 							chemical_gradients[x, y, z, source] += (1 - p.distance_to(s) / diagonal_length)
-							chemical_gradients[x, y, z, source] = max (0, chemical_gradients[x, y, z, source])
+							chemical_gradients[x, y, z, source] = max (0, chemical_gradients[x, y, z, source])							
 		np.save(filepath, chemical_gradients)
 		
 def debug_chem_grad_field (field, gen, thr):
@@ -1723,8 +1744,8 @@ def debug_chem_grad_field (field, gen, thr):
 			for z in xrange(field.shape[2]):
 				if field[x, y, z, gen] > thr:
 					print "%i, %i, %i ist %.4f" %(x, y, z, field[x, y, z, gen])
-
-
+					
+					
 class Simulation ():
 	""" This is our "Central processing unit". It manages the whole simulation
 		including distance matrix, geotree, neuron generators and neurons.
@@ -1756,8 +1777,8 @@ class Simulation ():
 		
 	def set_chemical_gradient_field (self, gradient_field, dictionary):
 		self.chemical_gradients = gradient_field
-		self.chem_dict = dictionary
-
+		self.chem_dict = dictionary		
+	
 	def use_geotree (self, boolean, capacity = 50, search_radius = 5):
 		""" Tells the simulation whether a indexing structure should be used,
 			to speed the computation up. With 300 neurons the factor is 3
@@ -1805,9 +1826,9 @@ class Simulation ():
 			if neuron.active:
 				# grow 
 				if neuron.type == "long" :
-					x = min(self.chemical_gradients.shape[0] - 1, max(1, round(neuron.axon.head.x) - bounding_box.left_front_lower.x))
-					y = min(self.chemical_gradients.shape[1] - 1, max(1, round(neuron.axon.head.y) - bounding_box.left_front_lower.y))
-					z = min(self.chemical_gradients.shape[2] - 1, max(1, round(neuron.axon.head.z) - bounding_box.left_front_lower.z))
+					x = min(self.chemical_gradients.shape[0] - 1, max(1, round(neuron.axon.head.x) - self.bounding_box.left_front_lower.x))
+					y = min(self.chemical_gradients.shape[1] - 1, max(1, round(neuron.axon.head.y) - self.bounding_box.left_front_lower.y))
+					z = min(self.chemical_gradients.shape[2] - 1, max(1, round(neuron.axon.head.z) - self.bounding_box.left_front_lower.z))
 					target_area = self.chem_dict[neuron.target_area]
 					gradient_field = [self.chemical_gradients[x - 1][y - 1][z - 1][target_area], self.chemical_gradients[x - 1][y][z - 1][target_area], \
 					self.chemical_gradients[x - 1][y + 1][z - 1][target_area], self.chemical_gradients[x][y + 1][z - 1][target_area], \
@@ -1828,7 +1849,7 @@ class Simulation ():
 				elif neuron.type == "short":					
 					neuron.axon.push_delta(neuron.grow())
 				self.neuron_path[neuron.dist_index].append(neuron.axon.head)
-				# make connections
+				# make connections				
 				if self.tree :						
 					center = neuron.axon.middle
 					radius = neuron.axon.get_length + self.tree_search_radius
@@ -1855,7 +1876,7 @@ class Simulation ():
 		self.dist_counter = 0
 
 		id_generator = 1
-		for generator in self.generators:	
+		for generator in self.generators:				
 			for area in generator.areas:			
 				area.occupied_volume = 0.0
 				area.sim_active = True
@@ -1864,7 +1885,7 @@ class Simulation ():
 					id_generator += 1
 		if not self.simulation_area:	
 			min_x, min_y, min_z, max_x, max_y, max_z = 100000, 100000, 100000, 0, 0, 0		
-			for generator in self.generators:				
+			for generator in self.generators:			
 				for area in generator.areas:
 					bounding_box = area.get_bounding_box()
 					min_x = min( min_x, bounding_box.left_front_lower.x)
@@ -1964,8 +1985,8 @@ class Simulation ():
 			for n in self.neurons:
 				s = n.get_position().__str__().strip('()') + ", " + n.axon.get_head().__str__().strip('()') +  "\n"
 				f.write(s)
-
-
+				
+				
 class ShortDistanceNeuron (object):
 		
 	def __init__ (self, position, bounding_area, area_type, rotation_angle):
@@ -2040,25 +2061,31 @@ class LongDistanceNeuron (object):
 		self.target_area = target_area		
 		self.grow_speed_constant = 7
 		self.axon_flexibility = 0.02
-		self.growth_speed = 0.3
+		self.growth_speed = 1
 		self.area_type = ""
+		self.painted = 0
 		
 	def grow (self, gradient_field):
 		""" modified glücksrad auswahl
 		"""
 		inverse_distance_to_area = max(gradient_field)
+		base = min(gradient_field)
+		gradient_field =  map (lambda x: (pow(int((x - base) * 1000), 4)), gradient_field)
+		
+		
 		direction = n3Point(0, 0, 0)
-		if inverse_distance_to_area < 0.85 :
+		if inverse_distance_to_area < 0.92 :
 			# "white matter"	
 			liste = map(lambda x: (max(0, x-0.5))**3, gradient_field)
 			summe = random.random() * sum(liste)
 			growth_speed = (1.1 - inverse_distance_to_area) * self.grow_speed_constant
 			i = 0
 			while summe > 0:
-				summe += liste[i]
-				i -= 1
-			z = i / 9 -1
-			i %= 9	
+				summe -= liste[i]
+				i += 1
+			i -= 1
+			z = i / 9 - 1
+			i %= 9
 			if i == 0 or i == 1 or i == 2:
 				x = -1
 			elif i == 3 or i == 7 or i == 8:
@@ -2073,13 +2100,18 @@ class LongDistanceNeuron (object):
 				y = 1
 			direction.x = x * growth_speed
 			direction.y = y * growth_speed
-			direction.z = z * growth_speed
+			direction.z = z * growth_speed			
 		else:
 			# "grey matter"
 			direction.x = random.normalvariate(self.axon.direction_vector_norm.x , self.axon_flexibility) # flexibility of axon
 			direction.y = random.normalvariate(self.axon.direction_vector_norm.y, self.axon_flexibility)
 			direction.z = random.normalvariate(self.axon.direction_vector_norm.z, self.axon_flexibility)
-			direction = direction / direction.length * self.growth_speed 
+			direction = direction / direction.get_length() * self.growth_speed
+		if self.painted :
+				print inverse_distance_to_area
+				print self.axon.head
+				print direction
+				raw_input('Press "Enter" to compute next step.')
 		return direction
 			
 		
@@ -2163,17 +2195,17 @@ class LayersNeuronGenerator (object):
 		"""
 		if simulation_step < 50 :
 			if   area.id=="Layer1":
-				return 1
+				return 0
 			elif area.id == "Layer2":
-				return 1
+				return 0
 			elif area.id == "Layer3":
-				return 1
+				return 0
 			elif area.id == "Layer4":
 				return 1
 			elif area.id == "Layer5":
-				return 1
+				return 0
 			else : #Layer6
-				return 1
+				return 0
 		else :
 			return 0
 
@@ -2183,7 +2215,8 @@ class LayersNeuronGenerator (object):
 		"""
 		x = random.random() * (area.right_front_lower - area.left_front_lower).x + area.left_front_lower.x
 		y = random.random() * (area.left_back_lower - area.left_front_lower).y + area.left_front_lower.y	
-		z = random.random() * (area.right_front_top - area.left_front_lower).z + area.left_front_lower.z			
+		z = random.random() * (area.right_front_top - area.left_front_lower).z + area.left_front_lower.z
+					
 		if   area.id=="Layer1":
 			return ShortDistanceNeuron(n3Point(x, y, z), self.bounding_box, self.area_type, self.rotation_angle)
 		elif area.id == "Layer2":
@@ -2191,6 +2224,10 @@ class LayersNeuronGenerator (object):
 		elif area.id == "Layer3":
 			return ShortDistanceNeuron(n3Point(x, y, z), self.bounding_box, self.area_type, self.rotation_angle)
 		elif area.id == "Layer4":
+			if simulation_step == 1 and self.area_type == "A1":
+				neuron = LongDistanceNeuron(n3Point(x, y, z), self.area_target)
+				neuron.painted = 1
+				return neuron
 			return LongDistanceNeuron(n3Point(x, y, z), self.area_target)
 		elif area.id == "Layer5":
 			return ShortDistanceNeuron(n3Point(x, y, z), self.bounding_box, self.area_type, self.rotation_angle)
@@ -2243,8 +2280,9 @@ n3Sphere(n3Point(58, 58, -58), 75), n3Sphere(n3Point(-58, 58, -58), 75), n3Spher
 s = Simulation([lg1, lg2, lg3, lg4, lg5, lg6])
 s.set_bounding_area = n3Sphere(n3Point(0, 0, 0), 100)
 s.set_chemical_gradient_field(np.load("chemical_gradient_field.npy"),  {"A1" : 0, "A2" : 1, "A3" : 2, "A4" : 3, "A5" : 4, "A6" : 5})
-s.set_verbosity(1)
-#s.simulate()
+s.set_verbosity(0)
+s.simulate()
+print s.neuron_path[0]
 #s.print_simulation_meta_data()
 #print s.get_statistics()
 #d = s.get_distance_matrix()
