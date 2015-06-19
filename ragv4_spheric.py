@@ -21,37 +21,61 @@ random.seed()
 
 
 class n3Point(object):
+	"""Representation of a point in a three dimensional space. It is considered a location vector
+	so vector operations are also implemented. If an object has the attributes x, y and z 
+	simple operations (like +,-,...) with this class are possible.
+	"""	
+	
 	
 	def __init__ (self, x, y, z):
+		"""Basic constructor. In case of changing x, y or z and then getting the length, one should use the
+		function get_length() to get the updated length
+		"""
 		self.x = x
 		self.y = y
 		self.z = z
 		self.length = sqrt (x * x + y * y + z * z)
 
 	def __add__ (self, p):
+		"""Method to add 2 vectors. A new instance with the type of self containing the results will be returned
+		"""
 		return self.__class__(self.x + p.x, self.y + p.y, self.z + p.z)
 
 	def __sub__ (self, p):
+		"""Method to subtract 2 vectors. A new instance with the type of self containing the results will be returned
+		"""
 		return self.__class__(self.x - p.x, self.y - p.y, self.z - p.z)
 		
 	def __mul__ (self, k):
+		"""Method to multiply this vector with a constant . A new instance with the type of self containing the results will be returned
+		"""
 		return self.__class__(self.x * k, self.y * k, self.z * k)
 		
 	def __div__ (self, k):
-         i = float(k)
-         return self.__class__(self.x / i, self.y / i, self.z / i)
+		"""Method to divide this vector with a constant. A new instance with the type of self containing the results will be returned
+		"""
+		i = float(k)
+		return self.__class__(self.x / i, self.y / i, self.z / i)
 		
 	def __truediv__ (self, k):
-         i = float(k)
-         return self.__class__(self.x / i, self.y / i, self.z / i)
+		"""Method to divide this vector with a constant. A new instance with the type of self containing the results will be returned
+		"""
+		i = float(k)
+		return self.__class__(self.x / i, self.y / i, self.z / i)
 		
 	def scalar_product (self, v):
+		"""Method to compute the scalar product. 
+		"""
 		return self.x * v.x + self.y * v.y + self.z * v.z	
 	
 	def vector_product (self, v):
+		"""Method to compute the vector product. A new instance with the type of self containing the results will be returned
+		"""
 		return self.__class__(self.y * v.z - self.z * v.y, self.z * v.x - self.x * v.z, self.x * v.y - self.y * v.x)
 
 	def distance_to (self, p):
+		"""Method to compute the distance between this and point p.
+		"""
 		return sqrt ((self.x - p.x )* (self.x - p.x) + (self.y - p.y) * (self.y - p.y) + (self.z - p.z) * (self.z - p.z))
 		
 	def __str__(self):
@@ -65,7 +89,7 @@ class n3Point(object):
 		return str("(" + str(self.x) + "," + str(self.y) + "," + str(self.z) + ")")
 		
 	def rotate_by_degree (self, alpha, beta, gamma):
-		""" Drehung im Uhrzeigersinn
+		""" Method to rotate this point. The rotation is in clockwise direction		 
 		"""
 		alpha = radians (alpha)
 		beta = radians (beta)
@@ -79,11 +103,18 @@ class n3Point(object):
 		return self.__class__(x2, y2, z2)
 		
 	def get_length (self):
+		"""Method to get the length of this (location vector)
+		"""
 		self.length = sqrt (self.x * self.x + self.y * self.y + self.z * self.z)
 		return self.length
 		
 
 class n3Line(object):
+	""" This class defines a line. It is defined by 2 points: head and tail.
+		For every push head and tail are newly set and the old ones are 
+		forgotten. Finally it implements also a function computing the distance
+		to a given point.
+	"""		
 	
 	def __init__(self, *points):
 		""" Simple constructor. Pushes the line by iterating over all points
@@ -166,32 +197,64 @@ class n3Line(object):
  
  
 class n3Sphere (object):
+	"""Representation of a sphere in a three dimensional space.
+	"""	
 	
 	def __init__ (self, point, radius):
+		"""Basic constructor. In case of changing the radius, one should use the
+		function get_volume() to get the updated volume
+		"""
 		self.middle = point
 		self.radius = radius
 		self.longest_in_area_line_length = radius * 2
 		self.volume = 4 / 3 * pi * radius * radius * radius
 		
 	def lies_inside (self, p):
+		"""Method to compute whether the point p lies inside the sphere
+		"""
 		return self.middle.distance_to(p) <= self.radius
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this sphere, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		return n3AxisParallelRectangle(n3Point(self.middle.x - self.radius, self.middle.y - self.radius, self.middle.z - self.radius), \
 		n3Point(self.middle.x + self.radius, self.middle.y + self.radius, self.middle.z + self.radius))
 		
 	def translate (self, p):
+		"""Method to shift the center to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.middle += p
 		
 	def rotate_by_root (self, alpha, beta, gamma):
+		"""Method to rotate the center (and therefore the whole sphere) along the coordinates root
+		"""
 		self.middle = self.middle.rotate_by_degree(alpha, beta, gamma)
     
 	def rotate_by_self (self, alpha, beta, gamma):
 		print "Rotating a sphere with the axis aligned on it's center won't do anything."
+		
+	def get_volume(self):
+		"""Method to compute and update the volume
+		"""
+		self.volume = 4 / 3 * pi * self.radius * self.radius * self.radius
+		return self.volume
+				
+	def get_longest_in_area_line_length(self):
+		"""Method to compute and update the longest "in-line" and returns it 
+		"""
+		self.longest_in_area_line_length = self.radius * 2		
+		return self.longest_in_area_line_length
+				
 				
 class n3Ellipsoid (object):
+	"""Representation of an ellipsoid in a three dimensional space.
+	"""	
 	
 	def __init__ (self, middle, rx, ry, rz):
+		"""Basic constructor. In case of changing one of rx, ry or rz one should use the
+		function get_volume() to get the updated volume
+		"""
 		self.middle = middle
 		self.rx = rx
 		self.ry = ry
@@ -203,6 +266,8 @@ class n3Ellipsoid (object):
 		self.longest_in_area_line_length = 2 * max (rx, ry, rz)
 		
 	def lies_inside (self, p):
+		"""Method to compute whether the point p lies inside the ellipsoid
+		"""
 		rotated_p = p.rotate(-1 * self.alpha, -1 * self.beta, -1 * self.gamma)
 		x = rotated_p.x - self.middle.x
 		y = rotated_p.y - self.middle.y
@@ -210,25 +275,45 @@ class n3Ellipsoid (object):
 		return (x * x / self.rx / self.rx + y * y / self.ry / self.ry + z * z / self.rz / self.rz ) <= 1
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this ellipsoid, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		r = n3Rectangle(n3Point(self.middle.x - self.rx, self.middle.y - self.ry, self.middle.z - self.rz), \
 		n3Point(self.middle.x + self.rx, self.middle.y + self.ry, self.middle.z + self.rz))
 		r.rotate_by_self(self.alpha, self.beta, self.gamma)
 		return r.get_bounding_box()
 		
 	def rotate_by_root (self, alpha, beta, gamma):
+		"""Method to rotate the center (and therefore the whole ellipsoid) along the coordinates root
+		"""
 		self.middle = self.middle.rotate(alpha, beta, gamma)
 		self.alpha += alpha
 		self.beta += beta
 		self.gamma += gamma
 	
 	def rotate_by_self (self, alpha, beta, gamma):
+		"""Method to rotate the structure along the center of itself
+		"""
 		self.alpha += alpha
 		self.beta += beta
 		self.gamma += gamma
 	
 	def translate (self, p):
+		"""Method to shift the center to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.middle += p
 	
+	def get_volume(self):
+		"""Method to compute and update the volume
+		"""
+		self.volume = 4 / 3 * pi * self.rx * self.ry * self.rz
+		return self.volume
+				
+	def get_longest_in_area_line_length(self):
+		"""Method to compute and update the longest "in-line" and returns it 
+		"""
+		self.longest_in_area_line_length = 2 * max (self.rx, self.ry, self.rz)		
+		return self.longest_in_area_line_length
 
 class n3Pyramid(object):
 	#TODO: implement
@@ -236,25 +321,26 @@ class n3Pyramid(object):
 
 
 class n3Rectangle(object):
-    
+	"""Representation of a rectangle in a three dimensional space.
+	"""	   
+
 	def __init__ (self, points): 
-		""" Simple constructor with following ordering of the points.
+		"""Constructor which takes a list of eight points. These points will be ordered to be able to compute whether points lie
+		inside. It is not recommended to alter the points by oneself, instead it would be the better way to initialise a 
+		new rectangle with the desired parameters.
 		"""		
-		"""Orders points according to: Most left Bottom Point is first, then
-			left upper, then right upper and finally right bottom. 	The 
-			points are determined via the distance to coordinate origin
-			and a point on the x axis lying to the right of the rectangle.
-		"""
 		self.points = points
 		x = 0
 		y = 0
 		z = 0
+		#At first the rectangle is temporarily shifted into the first quadrant.
 		for p in points:
 			x = min(x, p.x) 
 			y = min(y, p.y)
 			z = min(z, p.z)
 		translate_vector = n3Point(x, y, z)
 		ps = map(lambda n: n - translate_vector, points)
+		#Then outer fix points will be computed, which is needed for the ordering
 		max_y = 0
 		for i in ps:
 			if i.y > max_y:
@@ -278,6 +364,7 @@ class n3Rectangle(object):
 			self.left_back_lower, self.right_front_top = self.init_get_extreme_points(ps, n3Point(0, max_y, 0))
 			self.right_back_lower, self.left_front_top = self.init_get_extreme_points(ps, n3Point(max_x, max_y, 0))
 			self.right_front_lower, self.left_back_top = self.init_get_extreme_points(ps, n3Point(max_x, 0, 0))
+		#After the ordering has finished, the final points are determined
 		self.left_front_lower = self.left_front_lower + translate_vector
 		self.left_back_lower = self.left_back_lower + translate_vector
 		self.right_back_lower = self.right_back_lower + translate_vector
@@ -286,7 +373,8 @@ class n3Rectangle(object):
 		self.left_back_top = self.left_back_top + translate_vector
 		self.right_back_top = self.right_back_top + translate_vector
 		self.right_front_top = self.right_front_top + translate_vector
-		self.compute_hesse_params()			
+		self.compute_hesse_params()
+		#Finally computing some "attributes" of the rectangle			
 		self.inner_radius = ((self.right_front_lower - self.left_front_lower)/2).length
 		self.outer_radius = (self.middle - self.left_front_lower).length
 		self.diagonal_length = (self.left_front_lower - self.right_back_top).length
@@ -294,6 +382,8 @@ class n3Rectangle(object):
 		self.volume = (self.right_front_lower - self.left_front_lower).length * (self.left_back_lower - self.left_front_lower).length * (self.left_front_top - self.left_front_lower).length
 			
 	def compute_hesse_params (self):
+		"""Method the compute the Hesse parameter. It is needed to check whether a point lies inside the rectangle
+		"""
 		self.middle = self.left_front_lower + (self.right_back_top - self.left_front_lower) / 2
 		self.norm_vector_side_bottom = (self.right_front_lower - self.left_front_lower).vector_product(self.left_back_lower - self.left_front_lower)
 		self.norm_vector_side_bottom = self.norm_vector_side_bottom / self.norm_vector_side_bottom.length
@@ -312,16 +402,22 @@ class n3Rectangle(object):
 		self.hesse_top_d = self.norm_vector_side_top.scalar_product(self.right_back_top)		
 		
 	def init_get_extreme_points(self, liste, p):
-         l = []
-         for i in liste:
-             l.append((i.distance_to (p), i))
-         l.sort(lambda x,y: -1 if x < y else 1)
-         return (l[0][1], l[7][1])
+		"""Method to compute the points with the smallest and the longest distance. It is used for the ordering.
+		"""
+		l = []
+		for i in liste:
+			l.append((i.distance_to (p), i))
+		l.sort(lambda x,y: -1 if x < y else 1)
+		return (l[0][1], l[7][1])
   
-	def get_ordered_points(self):
+	def get_ordered_points(self):#
+		"""Method to return the points in with the internal order.
+		"""
 		return [self.left_front_lower, self.left_back_lower, self.right_back_lower, self.right_front_lower, self.left_front_top, self.left_back_top, self.right_back_top, self.right_front_top]
 		
 	def lies_inside (self, p):
+		"""Method the check whether the point p lies inside the rectangle.
+		"""
 		d = self.middle.distance_to(p)
 		if d > self.outer_radius:
 			return False
@@ -333,6 +429,8 @@ class n3Rectangle(object):
 				(p.scalar_product(self.norm_vector_side_bottom) - self.hesse_bottom_d) >= 0 and (p.scalar_product(self.norm_vector_side_top) - self.hesse_top_d) >= 0
 				
 	def rotate_by_root (self, alpha, beta, gamma):
+		"""Method to rotate the rectangle along the coordinates root
+		"""
 		self.left_front_lower = self.left_front_lower.rotate_by_degree(alpha, beta, gamma)
 		self.left_back_lower = self.left_back_lower.rotate_by_degree(alpha, beta, gamma)
 		self.right_back_lower = self.right_back_lower.rotate_by_degree(alpha, beta, gamma)
@@ -346,6 +444,8 @@ class n3Rectangle(object):
 		self.compute_hesse_params()
 		
 	def translate (self, p):
+		"""Method to shift the rectangle to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.left_front_lower +=  p
 		self.left_back_lower += p
 		self.right_back_lower += p
@@ -359,12 +459,17 @@ class n3Rectangle(object):
 		self.compute_hesse_params()
 			
 	def rotate_by_self (self, alpha, beta, gamma):
+		"""Method to rotate the rectangle along the self center
+		"""
 		middle = self.middle
 		self.translate(middle * -1)
 		self.rotate_by_root(alpha, beta, gamma)
 		self.translate(middle)
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this rectangle, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		min_x, min_y, min_z, max_x, max_y, max_z = self.points[0].x, self.points[0].y, self.points[0].z, self.points[0].x, self.points[0].y, self.points[0].z
 		for p in self.points[1:]:
 			min_x = min( min_x, p.x)
@@ -377,10 +482,13 @@ class n3Rectangle(object):
   
 		
 class n3AxisParallelRectangle (n3Rectangle):
-	""" The lines of the rectangle are parallel to the axis.
+	"""Representation of a rectangle in a three dimensional space, where all lines are parallel to the axis
 	"""	
 	
 	def __init__(self, p1, p7):
+		"""Basic Constructor which takes two points. It is considered following:
+		p1.x < p7.x and p1.y < p7.y and p1.z < p7.z		
+		"""
 		p2 = n3Point(p1.x, p7.y, p1.z)
 		p3 = n3Point(p7.x, p7.y, p1.z)
 		p4 = n3Point(p7.x, p1.y, p1.z)
@@ -402,11 +510,16 @@ class n3AxisParallelRectangle (n3Rectangle):
 		self.longest_in_area_line_length = self.diagonal_length
 	
 	def lies_inside (self, p1):
+		"""Method to check whether point p1 lies inside
+		"""
 		return self.left_front_lower.x <= p1.x <= self.right_front_lower.x and  \
 			self.left_front_lower.y <= p1.y <= self.left_back_lower.y and \
 			self.left_front_lower.z <= p1.z <= self.left_front_top.z
 			
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this rectangle, is aligned to the axis and is the smallest
+		one of all possible rectangle. Basically it returns a copy of itself.
+		"""
 		return deepcopy(self)
 
 
@@ -415,7 +528,8 @@ class n2Point(object):
 	"""		
 
 	def __init__ (self, x, y):
-		""" Simple constructor.
+		"""Basic constructor. In case of changing x or y and then getting the length, one should use the
+		function get_length() to get the updated length
 		"""
 		self.x = x
 		self.y = y
@@ -494,10 +608,12 @@ class n2Point(object):
 		return self
 		
 	def get_right_normal (self):
+		"""Method the get a normal of this vector
+		"""
 		return self.__class__(self.y, self.x * -1)
 		
 	def rotate_by_degree (self, alpha):
-		""" Im Uhrzeigersinn
+		""" Method to rotate this point. The rotation is in clockwise direction		 
 		"""
 		alpha *= -1
 		alpha = radians (alpha)
@@ -506,6 +622,8 @@ class n2Point(object):
 		return self.__class__(x, y)		
 
 	def get_length (self):
+		"""Method to get the length of this (location vector)
+		"""
 		self.length = sqrt (self.x * self.x + self.y * self.y)
 		return self.length
 
@@ -593,33 +711,64 @@ class n2Line (object):
 
 
 class n2Sphere (object):
+	"""Representation of a sphere in a two dimensional space.
+	"""	
 	
 	def __init__ (self, point, radius):
+		"""Basic constructor. In case of changing the radius, one should use the
+		function get_volume() to get the updated volume
+		"""
 		self.middle = point
 		self.radius = radius
 		self.volume = pi * radius * radius
 		self.longest_in_area_line_length = 2 * radius
 		
 	def lies_in (self, p):
+		"""Method to compute whether the point p lies inside the sphere
+		"""
 		return self.middle.distance_to(p) <= self.radius
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this sphere, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		return n2AxisParallelRectangle(n2Point(self.middle.x - self.radius, self.middle.y - self.radius), \
 		n2Point(self.middle.x + self.radius, self.middle.y + self.radius))
 		
 	def translate (self, p):
+		"""Method to shift the center to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.middle += p
 		
 	def rotate_by_root (self, alpha):
+		"""Method to rotate the center (and therefore the whole sphere) along the coordinates root
+		"""
 		self.middle = self.middle.rotate_by_degree(alpha)
     
 	def rotate_by_self (self, alpha):
 		print "Rotating a sphere with the axis aligned on it's center won't do anything."
-    
+		
+	def get_volume(self):
+		"""Method to compute and update the volume
+		"""
+		self.volume = pi * self.radius * self.radius
+		return self.volume
+				
+	def get_longest_in_area_line_length(self):
+		"""Method to compute and update the longest "in-line" and returns it 
+		"""
+		self.longest_in_area_line_length = self.radius * 2		
+		return self.longest_in_area_line_length
 				
 class n2Ellipsoid (object):
+	"""Representation of an ellipsoid in a two dimensional space.
+	"""		
+	
 	
 	def __init__ (self, middle, rx, ry):
+		"""Basic constructor. In case of changing one of rx or ry one should use the
+		function get_volume() to get the updated volume
+		"""
 		self.middle = middle
 		self.rx = rx
 		self.ry = ry
@@ -628,37 +777,65 @@ class n2Ellipsoid (object):
 		self.longest_in_area_line_length = 2 * max (rx, ry)		
 		
 	def lies_inside (self, p):
+		"""Method to compute whether the point p lies inside the ellipsoid
+		"""
 		rotated_p = p.rotate(-1 * self.alpha, -1 * self.beta)
 		x = rotated_p.x - self.middle.x
 		y = rotated_p.y - self.middle.y
 		return (x * x / self.rx / self.rx + y * y / self.ry / self.ry) <= 1
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this ellipsoid, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		r =  n2Rectangle(n2Point(self.middle.x - self.rx, self.middle.y - self.ry), \
 		n2Point(self.middle.x + self.rx, self.middle.y + self.ry))
 		return r.get_
 		
 	def rotate_by_root (self, alpha):
+		"""Method to rotate the center (and therefore the whole sphere) along the coordinates root
+		"""
 		self.middle = self.middle.rotate(alpha)
 		self.alpha += alpha
 	
 	def rotate_by_self (self, alpha):
+		"""Method to rotate the structure along the center of itself
+		"""
 		self.alpha += alpha
 	
 	def translate (self, p):
+		"""Method to shift the center to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.middle += p
+	
+	def get_volume(self):
+		"""Method to compute and update the volume
+		"""
+		self.volume = pi * self.rx * self.ry
+		return self.volume
+				
+	def get_longest_in_area_line_length(self):
+		"""Method to compute and update the longest "in-line" and returns it 
+		"""
+		self.longest_in_area_line_length = 2 * max (self.rx, self.ry)		
+		return self.longest_in_area_line_length	
+	
 	
 
 class n2Rectangle (object):
-	""" This class implements a rectangle and is implemented based on n2Point"""	
+	"""This class implements a rectangle and is implemented based on n2Point and it is considered all values are positive.
+	"""	
 	
 	def __init__ (self, p1, p2, p3, p4): 
-		""" Simple constructor with following ordering of the points.
-		"""		
+		"""Constructor which takes a list of four points. These points will be ordered to be able to compute whether points lie
+		inside. It is not recommended to alter the points by oneself, instead it would be the better way to initialise a 
+		new rectangle with the desired parameters.
+		"""	
 			
 		points = [p1, p2, p3, p4]
 		self.points = points
-		
+
+		#Outer fix points will be computed, which is needed for the ordering
 		max_x = 0
 		for i in points:
 			if i.y > max_x:
@@ -675,13 +852,16 @@ class n2Rectangle (object):
 		else:
 			self.left_front, self.right_back = self.init_get_extreme_points(points, n3Point(0, 0, 0))
 			self.right_front, self.left_back = self.init_get_extreme_points(points, n3Point(max_x, 0, 0))
+		#After the ordering has finished, the final points are determined and some "attributes" are computed
 		self.inner_radius = ((self.right_front - self.left_front)/2).length
 		self.middle = self.left_front + (self.right_back - self.left_front) / 2
 		self.outer_radius = (self.middle - self.left_front).length
 		self.compute_hesse_params()
 		self.volume = (self.left_back - self.left_front).length * (self.right_front - self.left_front).length
-		
+	
 	def compute_hesse_params (self):
+		"""Method the compute the Hesse parameter. It is needed to check whether a point lies inside the rectangle
+		"""
 		self.middle = self.left_front + (self.right_back - self.left_front) / 2
 		self.norm_vector_side_left = (self.left_back - self.left_front).get_right_normal()
 		self.norm_vector_side_left = self.norm_vector_side_left / self.norm_vector_side_left.length
@@ -695,11 +875,13 @@ class n2Rectangle (object):
 		self.hesse_right_d = self.norm_vector_side_right.scalar_product(self.right_back)
 		
 	def init_get_extreme_points(self, liste, p):
-         l = []
-         for i in liste:
-             l.append((i.distance_to (p), i))
-         l.sort(lambda x,y: -1 if x < y else 1)
-         return (l[0][1], l[3][1])
+		"""Method to compute the points with the smallest and the longest distance. It is used for the ordering.
+		"""
+		l = []
+		for i in liste:
+			l.append((i.distance_to (p), i))
+		l.sort(lambda x,y: -1 if x < y else 1)
+		return (l[0][1], l[3][1])
 				
 	def get_ordered_points (self): 
 		""" Simple getter method. Returns the points of the rectangle in a list.
@@ -715,6 +897,8 @@ class n2Rectangle (object):
 		return self.left_front + (self.right_back - self.left_front) / 2
 
 	def lies_inside (self, p):
+		"""Method the check whether the point p lies inside the rectangle.
+		"""
 		d = self.middle.distance_to(p)
 		if d > self.outer_radius:
 			return False
@@ -725,6 +909,8 @@ class n2Rectangle (object):
 				(p.scalar_product(self.norm_vector_side_left) - self.hesse_left_d) >= 0 and (p.scalar_product(self.norm_vector_side_right) - self.hesse_right_d) >= 0
 				
 	def rotate_by_root (self, alpha):
+		"""Method to rotate the rectangle along the coordinates root
+		"""
 		self.left_front = self.left_front.translate_by_degree(alpha)
 		self.left_back = self.left_back.translate_by_degree(alpha)
 		self.right_back = self.right_back.translate_by_degree(alpha)
@@ -732,6 +918,8 @@ class n2Rectangle (object):
 		self.compute_hesse_params()
 		
 	def translate (self, p):
+		"""Method to shift the rectangle to a new position. The parameter p + old position results in the new one (means relative)
+		"""
 		self.left_front = self.left_front + p
 		self.left_back = self.left_back + p
 		self.right_back = self.right_back + p
@@ -739,12 +927,17 @@ class n2Rectangle (object):
 		self.compute_hesse_params()
 			
 	def rotate_by_self (self, alpha):
+		"""Method to rotate the rectangle along the self center
+		"""
 		middle = self.middle
 		self.translate(middle * -1)
 		self.rotate_by_root(alpha)
 		self.translate(middle)
   
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this rectangle, is aligned to the axis and is the smallest
+		one of all possible rectangle.
+		"""
 		min_x, min_y, max_x, max_y = self.points[0].x, self.points[0].y, self.points[0].x, self.points[0].y 
 		for p in self.points[1:]:
 			min_x = min( min_x, p.x)
@@ -754,10 +947,13 @@ class n2Rectangle (object):
 		return n2AxisParallelRectangle(n3Point(min_x, min_y), n3Point(max_x, max_y))
 
 class n2AxisParallelRectangle (n2Rectangle):
-	""" The lines of the rectangle are parallel to the axis.
+	"""Representation of a rectangle in a two dimensional space, where all lines are parallel to the axis
 	"""	
 	
 	def __init__(self, p1, p2):
+		"""Basic Constructor which takes two points. It is considered following:
+		p1.x != p2.x and p1.y != p2.y 
+		"""
 		p3 = n2Point(p1.x, p2.y)
 		p4 = n2Point(p2.x, p1.y)
 		points = [p1, p2, p3, p4]
@@ -773,15 +969,27 @@ class n2AxisParallelRectangle (n2Rectangle):
 		self.middle = self.left_front + (self.right_back - self.left_front) / 2
 	
 	def lies_inside (self, p1):
+		"""Method the check whether the point p1 lies inside the rectangle.
+		"""
 		return self.lbPoint.x <= p1.x <= self.ruPoint.x and self.lbPoint.y <= p1.y <= self.ruPoint.y
 		
 	def get_bounding_box (self):
+		"""Method to compute and return the rectangle which fully contains this rectangle, is aligned to the axis and is the smallest
+		one of all possible rectangle. Basically it returns a copy of itself.
+		"""
 		return deepcopy(self)
 		
 
 class n3GeoTree(object):
+	"""Object to index points in a three dimensional space. The idea is to store positional data in the tree structure. 
+	If the data is perfectly randomly distributed the access time is log n. If not the access time is getting worser for
+	dense areas and better for sparse ones.
+	For the algorithm to perform better, it is implemented iterative way instead of recursive. (which means it is very long)
+	"""
 	
 	def __init__ (self, limit, cube):
+		"""Basic constructor
+		"""
 		self.limit = limit
 		self.container = []
 		self.cube = cube
@@ -790,7 +998,10 @@ class n3GeoTree(object):
 		self.middle_y = cube.middle.y
 		self.middle_z = cube.middle.z
 
-	def add_element (self, element):				
+	def add_element (self, element):
+		"""At first the element will be added, by searching the correct leaf to insert to. And after that, the leaf will
+		be splitted if it has reached its capacity.
+		"""				
 		trie = self
 		while not trie.is_leaf:
 			if element.position.x <= trie.middle_x:
@@ -867,7 +1078,7 @@ class n3GeoTree(object):
 				trie.cube_right_back_top    = n3GeoTree(self.limit, n3AxisParallelRectangle(p[17], p[22]))
 				trie.cube_right_front_top   = n3GeoTree(self.limit, n3AxisParallelRectangle(p[16], p[23]))				
 				
-				"""
+				"""It took me hours to compute the right indices and therefore i won't delete this code!
 				trie.cube_left_front_lower = n3GeoTree(self.limit, n3AxisParallelRectangle([p[0], p[1], p[8], p[7], p[9], p[10], p[17], p[16]]))
 				trie.cube_left_back_lower  = n3GeoTree(self.limit, n3AxisParallelRectangle([p[1], p[2], p[3], p[8], p[10], p[11], p[12], p[17]]))
 				trie.cube_right_back_lower = n3GeoTree(self.limit, n3AxisParallelRectangle([p[8], p[3], p[4], p[5], p[17], p[12], p[13], p[14]]))
@@ -920,6 +1131,8 @@ class n3GeoTree(object):
 				trie.container = []		
 			
 	def get_sourrounding_elements (self, coords):
+		"""Given the coords, this method searches for the containing leaf and returns all its elements
+		"""
 		trie = self
 		while not trie.is_leaf:
 			if coords.x <= trie.middle_x:
@@ -964,6 +1177,10 @@ class n3GeoTree(object):
 		return trie.container
 
 	def get_elements_within_radius (self, coord, radius):
+		"""Given the coords, this method searches for the containing leaf and returns all elements of this and the sourrounding
+		containers which are hit by the sphere spanned by the coords and radius.
+		In our case the area covered by one leaf is way way larger than the radius and mostly 1 or 2 leafs are returned.
+		"""
 		result = []		
 		
 		coords = n3Point(coord.x - radius, coord.y, coord.z)
@@ -1237,6 +1454,8 @@ class n2GeoTree (object):
 	"""
 	
 	def __init__ (self, limit, rectangle):
+		"""Basic constructor
+		"""
 		self.limit = limit
 		self.container = []
 		self.rectangle = rectangle
@@ -1245,6 +1464,9 @@ class n2GeoTree (object):
 		self.middle_y = rectangle.middle.y
 
 	def add_element (self, element):				
+		"""At first the element will be added, by searching the correct leaf to insert to. And after that, the leaf will
+		be splitted if it has reached its capacity.
+		"""		
 		trie = self
 		while not trie.is_leaf:
 			if element.position.x <= trie.middle_x:
@@ -1301,6 +1523,8 @@ class n2GeoTree (object):
 				trie.container = []	
 			
 	def get_sourrounding_elements (self, coords):
+		"""Given the coords, this method searches for the containing leaf and returns all its elements
+		"""
 		trie = self
 		while not trie.is_leaf:
 			if coords.x <= trie.middle_x:
@@ -1323,6 +1547,10 @@ class n2GeoTree (object):
 		return trie.container
 
 	def get_elements_within_radius (self, coord, radius):
+		"""Given the coords, this method searches for the containing leaf and returns all elements of this and the sourrounding
+		containers which are hit by the sphere spanned by the coords and radius.
+		In our case the area covered by one leaf is way way larger than the radius and mostly 1 or 2 leafs are returned.
+		"""
 		result = []		
 		
 		coords = n3Point(coord.x - radius, coord.y, coord.z)
@@ -1513,6 +1741,8 @@ class GaussAlikeFunction ():
 	"""
 	
 	def __init__ (self, mean, standard_deviation, highest_point, lower_bound, upper_bound ):
+		"""Basic constructor
+		"""
 		self.mean = mean
 		self.highest_point = highest_point
 		self.variance = 	standard_deviation * standard_deviation		
@@ -1538,6 +1768,8 @@ class FuzzyFunction ():
 	"""	
 	
 	def __init__ (self, mean, highest_point, lower_bound, upper_bound):
+		"""Basic constructor
+		"""
 		self.mean = mean
 		self.highest_point = highest_point
 		self.lower_bound = lower_bound
@@ -1599,6 +1831,8 @@ class Scipy1DInterpolation ():
 	"""
 	
 	def __init__ (self, *points):
+		"""Basic constructor
+		"""
 		from scipy.interpolate import interp1d
 		x = []
 		y = []
@@ -1713,32 +1947,44 @@ class Distances ():
 		return deepcopy(self.container)
 		
 def create_chemical_gradients_field (area, sources, filepath, inhibitors=0):
-		bounding_box = area.get_bounding_box()
-		chemical_gradients = np.zeros(((bounding_box.left_front_lower - bounding_box.right_front_lower).length, \
-		(bounding_box.left_front_lower - bounding_box.left_back_lower).length, \
-		(bounding_box.left_front_lower - bounding_box.left_front_top).length, len(sources) ))
-		diagonal_length = (bounding_box.right_back_top - bounding_box.left_front_lower).length
-		p = n3Point(0, 0, 0)
-		lx = bounding_box.left_front_lower.x
-		ly = bounding_box.left_front_lower.y
-		lz = bounding_box.left_front_lower.z
-		for source in xrange(len(sources)):
-			print "Generator: "
-			print source
-			s = sources[source]
-			for x in xrange(chemical_gradients.shape[0]):					
-				for y in xrange(chemical_gradients.shape[1]):
-					for z in xrange(chemical_gradients.shape[2]):
-						p.x, p.y, p.z = x + lx, y + ly, z + lz
-						if area.lies_inside(p):
-							if inhibitors:									
-								for inhibitor in inhibitors:
-									chemical_gradients[x, y, z, source] -= max (0, ( 1 - inhibitor.middle.distance_to(p) / inhibitor.radius)  )
-							chemical_gradients[x, y, z, source] += (1 - p.distance_to(s) / diagonal_length)
-							chemical_gradients[x, y, z, source] = max (0, chemical_gradients[x, y, z, source])							
-		np.save(filepath, chemical_gradients)
+	"""Function to create a 4 dimensional gradient field for different affine areas. It means every 3D coordinate got some values
+	containing the "concentration" of the guidance molecules.
+	To compute the gradients a distance function will be used, with a underlying cut at 0. Additionally one could add inhibitor areas
+	which supresses any gradients - this could be used to create unpassable or difficult to pass areas. Means modelling some 
+	structures in the brain.
+	Finally a outer structure can be defined and no gradients will be computed out of this very area.
+	Because it takes so long to compute the gradient field, this method is "decoupled" from the rest of the simulation.
+	"""
+	bounding_box = area.get_bounding_box()
+	chemical_gradients = np.zeros(((bounding_box.left_front_lower - bounding_box.right_front_lower).length, \
+	(bounding_box.left_front_lower - bounding_box.left_back_lower).length, \
+	(bounding_box.left_front_lower - bounding_box.left_front_top).length, len(sources) ))
+	diagonal_length = (bounding_box.right_back_top - bounding_box.left_front_lower).length
+	p = n3Point(0, 0, 0)
+	lx = bounding_box.left_front_lower.x
+	ly = bounding_box.left_front_lower.y
+	lz = bounding_box.left_front_lower.z
+	for source in xrange(len(sources)):
+		print "Generator: "
+		print source
+		s = sources[source]
+		for x in xrange(chemical_gradients.shape[0]):					
+			for y in xrange(chemical_gradients.shape[1]):
+				for z in xrange(chemical_gradients.shape[2]):
+					p.x, p.y, p.z = x + lx, y + ly, z + lz
+					if area.lies_inside(p):
+						if inhibitors:									
+							for inhibitor in inhibitors:
+								chemical_gradients[x, y, z, source] -= max (0, ( 1 - inhibitor.middle.distance_to(p) / inhibitor.radius)  )
+						#distance function
+						chemical_gradients[x, y, z, source] += (1 - p.distance_to(s) / diagonal_length)
+						chemical_gradients[x, y, z, source] = max (0, chemical_gradients[x, y, z, source])							
+	np.save(filepath, chemical_gradients)
 		
 def debug_chem_grad_field (field, gen, thr):
+	"""Simple "Debug" function to get values from the gradient field. It prints all positions and values which exceed the threshold 
+	for the given generator
+	"""
 	for x in xrange(field.shape[0]):
 		for y in xrange(field.shape[1]):
 			for z in xrange(field.shape[2]):
@@ -1768,14 +2014,20 @@ class Simulation ():
 		self.upper_limit_container_capacity = float_number
 
 	def set_verbosity (self, integer):
+		""" "Chattines" of the simulation. 0 means no talking and 1 means talking
+		"""
 		self.verbose = integer
 
 	def set_bounding_area (self, area):
+		"""Method to set the bounding area - means the area in which the simulation takes place
+		"""
 		self.simulation_area = area
 		self.bounding_box = area.get_bounding_box()
 		self.max_distance = self.simulation_area.longest_in_area_line_length
 		
 	def set_chemical_gradient_field (self, gradient_field, dictionary):
+		"""Method the set the gradient field. Neurons of the "long" type need this field to grow
+		"""
 		self.chemical_gradients = gradient_field
 		self.chem_dict = dictionary		
 	
@@ -1796,6 +2048,7 @@ class Simulation ():
 		"""		
 		self.simulation_step_counter += 1
 		added_neurons = 0
+		#Adding neurons
 		for generator in self.generators:		
 			for area in generator.areas:
 				if area.sim_active:
@@ -1823,10 +2076,12 @@ class Simulation ():
 						self.neurons.append(nneuron)
 						self.neuron_path.append([nneuron.position])
 		neurons = self.neurons
+		#Simulation the growth of axons
 		for neuron in self.neurons:			
 			if neuron.active:
 				# grow 
 				if neuron.type == "long" :
+					#In case of border - we need for the grow function the surrounding area
 					x = min(self.chemical_gradients.shape[0] - 2, max(1, round(neuron.axon.head.x) - self.bounding_box.left_front_lower.x))
 					y = min(self.chemical_gradients.shape[1] - 2, max(1, round(neuron.axon.head.y) - self.bounding_box.left_front_lower.y))
 					z = min(self.chemical_gradients.shape[2] - 2, max(1, round(neuron.axon.head.z) - self.bounding_box.left_front_lower.z))
@@ -1867,6 +2122,9 @@ class Simulation ():
 
 	def simulate (self):
 		""" Main method to start the simulation.
+		Simulating will end automatically: if there is no active axon. To ensure that a minimum amount of simulations steps
+		will be performed (or the simulation runs at least), there is a variable called min_iterations for that purpose.
+		For performance reason axons and areas will be deactivated if they can't grow or contain more neurons.
 		"""
 		self.neurons = []
 		self.neuron_path = []	
@@ -1874,6 +2132,7 @@ class Simulation ():
 		self.simulation_step_counter = 0
 		self.dist_counter = 0
 
+		#Giving area "names", if they havent ones yet.
 		id_generator = 1
 		for generator in self.generators:				
 			for area in generator.areas:			
@@ -1882,6 +2141,7 @@ class Simulation ():
 				if not hasattr(area, 'id'):
 					area.id = 'Area%i' %(id_generator)
 					id_generator += 1
+		#Computing the bounds of the simulation area
 		if not self.simulation_area:	
 			min_x, min_y, min_z, max_x, max_y, max_z = 100000, 100000, 100000, 0, 0, 0		
 			for generator in self.generators:			
@@ -1987,9 +2247,12 @@ class Simulation ():
 				
 				
 class ShortDistanceNeuron (object):
+	"""These neurons can only grow in their small area.
+	This type of neurons are programmed to mainly stay in their vertical area. Small to none growth in "z-axis"
+	"""
 		
 	def __init__ (self, position, bounding_area, area_type, rotation_angle):
-		""" Trivial constructor
+		"""Basic constructor
 		"""
 		self.position = position
 		self.type = "short"
@@ -2047,9 +2310,13 @@ class ShortDistanceNeuron (object):
 	
 	
 class LongDistanceNeuron (object):
+	"""These neurons are designed to make long distance connections (inter-area). They use the gradient
+	field to find their way. Though it is random which exact path they take, it is very probable to grow
+	along the most probable way. (See grow function)
+	"""
 		
 	def __init__ (self, position, target_area):
-		""" Trivial constructor
+		"""Basic constructor
 		"""
 						
 		self.type = "long"
@@ -2067,7 +2334,7 @@ class LongDistanceNeuron (object):
 		self.painted = 0
 		
 	def grow (self, gradient_field):
-		""" modified glücksrad auswahl
+		"""The way it is growing is randomly determined by a "wheel of fortune" algorithm
 		"""
 		inverse_distance_to_area = max(gradient_field)
 		base = min(gradient_field)
@@ -2108,6 +2375,9 @@ class LongDistanceNeuron (object):
 			direction.y = random.normalvariate(self.axon.direction_vector_norm.y, self.axon_flexibility)
 			direction.z = random.normalvariate(self.axon.direction_vector_norm.z, self.axon_flexibility)
 			direction = direction / direction.get_length() * self.growth_speed
+		"""For debug purpose it is possible to "paint" some axons. So one can see their growth during the simulation. Though it is 
+		designed to track only 1. (More would mess the console output, though it is possible)
+		"""
 		if self.painted :
 				print inverse_distance_to_area
 				print self.axon.head
@@ -2143,12 +2413,12 @@ class LongDistanceNeuron (object):
 		
 	
 class LayersNeuronGenerator (object):
-	""" Very trivial generator. Every method implemented is used by the simulation.
-		Every generator class must either directly or indirectly inherit from this.
+	"""A generator for neurons which contains several areas (layers).
+	In Layer 4 grow LongDistanceNeurons - in the other ones there grow only short ones
 	"""
 	
 	def __init__(self, area, area_type, area_target, rotation_angle):
-		""" Trivial constructor. Metric and areas should generally exist.
+		"""Basic constructor. Metric and areas should generally exist.
 		"""
 		self.metric = ThreeDimEuclidMetric()
 		self.minimun_iterations = 2
@@ -2212,7 +2482,7 @@ class LayersNeuronGenerator (object):
 
 	def next_neuron(self, simulation_step, area):
 		""" Returning a new instance of neuron. This will be placed on the 
-			given area. If it collides, it won't be placed, at all.
+			given area. If it collides, it won't be placed at all.
 		"""
 		x = random.random() * (area.right_front_lower - area.left_front_lower).x + area.left_front_lower.x
 		y = random.random() * (area.left_back_lower - area.left_front_lower).y + area.left_front_lower.y	
@@ -2227,7 +2497,7 @@ class LayersNeuronGenerator (object):
 		elif area.id == "Layer4":
 			if simulation_step == 1 and self.area_type == "A1":
 				neuron = LongDistanceNeuron(n3Point(x, y, z), self.area_target)
-				neuron.painted = 1
+				#neuron.painted = 1
 				return neuron
 			return LongDistanceNeuron(n3Point(x, y, z), self.area_target)
 		elif area.id == "Layer5":
@@ -2235,6 +2505,14 @@ class LayersNeuronGenerator (object):
 		else : #Layer6
 			return ShortDistanceNeuron(n3Point(x, y, z), self.bounding_box, self.area_type, self.rotation_angle)
 	
+#example
+"""
+#first create gradient field for the LongDistanceNeurons - this will create a file which contains the gradient field
+inh =  [n3Sphere(n3Point(58, 58, 58), 75), n3Sphere(n3Point(-58, 58, 58), 75), n3Sphere(n3Point(58, -58, 58), 75), n3Sphere(n3Point(-58, -58, 58), 75), \
+n3Sphere(n3Point(58, 58, -58), 75), n3Sphere(n3Point(-58, 58, -58), 75), n3Sphere(n3Point(58, -58, -58), 75), n3Sphere(n3Point(-58, -58, -58), 75)]	
+create_chemical_gradients_field(n3Sphere(n3Point(0, 0, 0), 100),  [n3Point(0, 0, 0), n3Point(0, 50, 0), n3Point(50, 50, 0), n3Point(50, 0, 0), n3Point(0, 0, 30), \
+n3Point(0, 50, 30), n3Point(50, 50, 30), n3Point(50, 0, 30)], "chemical_gradient_field.npy", inh)
+"""
 	
 p1 = n3Point(0, 0, 0)
 p2 = n3Point(0, 50, 0)
@@ -2274,16 +2552,12 @@ r6.translate(r6.middle * -1 + n3Point(0, -75, 0))
 r6.rotate_by_self(90, 0, 0)
 lg6 = LayersNeuronGenerator(r6, "A6", "A1", (90, 0, 0))
 	
-#inhibitors
-inh =  [n3Sphere(n3Point(58, 58, 58), 75), n3Sphere(n3Point(-58, 58, 58), 75), n3Sphere(n3Point(58, -58, 58), 75), n3Sphere(n3Point(-58, -58, 58), 75), \
-n3Sphere(n3Point(58, 58, -58), 75), n3Sphere(n3Point(-58, 58, -58), 75), n3Sphere(n3Point(58, -58, -58), 75), n3Sphere(n3Point(-58, -58, -58), 75)]	
-	
 s = Simulation([lg1, lg2, lg3, lg4, lg5, lg6])
 s.set_bounding_area(n3Sphere(n3Point(0, 0, 0), 100))
 s.set_chemical_gradient_field(np.load("chemical_gradient_field.npy"),  {"A1" : 0, "A2" : 1, "A3" : 2, "A4" : 3, "A5" : 4, "A6" : 5})
 s.set_verbosity(0)
 s.simulate()
-print s.neuron_path[0]
+#print s.neuron_path[0]
 #s.print_simulation_meta_data()
 #print s.get_statistics()
 #d = s.get_distance_matrix()
