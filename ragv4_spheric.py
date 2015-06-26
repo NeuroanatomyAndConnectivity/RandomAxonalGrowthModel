@@ -268,11 +268,11 @@ class n3Ellipsoid (object):
 	def lies_inside (self, p):
 		"""Method to compute whether the point p lies inside the ellipsoid
 		"""
+		p.x -= self.middle.x
+		p.y -= self.middle.y
+		p.z -= self.middle.z
 		rotated_p = p.rotate(-1 * self.alpha, -1 * self.beta, -1 * self.gamma)
-		x = rotated_p.x - self.middle.x
-		y = rotated_p.y - self.middle.y
-		z = rotated_p.z - self.middle.z
-		return (x * x / self.rx / self.rx + y * y / self.ry / self.ry + z * z / self.rz / self.rz ) <= 1
+		return (rotated_p.x * rotated_p.x / self.rx / self.rx + rotated_p.y * rotated_p.y / self.ry / self.ry + rotated_p.z * rotated_p.z / self.rz / self.rz ) <= 1
 		
 	def get_bounding_box (self):
 		"""Method to compute and return the rectangle which fully contains this ellipsoid, is aligned to the axis and is the smallest
@@ -779,10 +779,10 @@ class n2Ellipsoid (object):
 	def lies_inside (self, p):
 		"""Method to compute whether the point p lies inside the ellipsoid
 		"""
+		p.x -= self.middle.x
+		p.y -= self.middle.y
 		rotated_p = p.rotate(-1 * self.alpha, -1 * self.beta)
-		x = rotated_p.x - self.middle.x
-		y = rotated_p.y - self.middle.y
-		return (x * x / self.rx / self.rx + y * y / self.ry / self.ry) <= 1
+		return (rotated_p.x * rotated_p.x / self.rx / self.rx + rotated_p.y * rotated_p.y / self.ry / self.ry) <= 1
 		
 	def get_bounding_box (self):
 		"""Method to compute and return the rectangle which fully contains this ellipsoid, is aligned to the axis and is the smallest
